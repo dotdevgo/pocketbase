@@ -67,7 +67,9 @@ func (app *PocketBase) configureExtensions(providers []Extension) error {
 
 // configureRouter godoc
 func (app *PocketBase) configureRouter(ctx *core.ServeEvent) error {
-	var controllers []AbstractController
+	app.Logger().Info("PocketBase: router")
+
+	var controllers []Controller
 
 	if err := app.Resolve(&controllers); err != nil {
 		if !errors.Is(err, di.ErrTypeNotExists) {
@@ -80,5 +82,4 @@ func (app *PocketBase) configureRouter(ctx *core.ServeEvent) error {
 	}
 
 	return ctx.Next()
-
 }
