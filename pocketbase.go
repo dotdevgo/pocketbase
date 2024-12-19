@@ -19,18 +19,21 @@ type (
 
 // New Create pocketbase instance
 func New(providers ...di.Option) *PocketBase {
-	// providers = append(providers, NewExtension(func() *controllerExtension {
-	// 	return &controllerExtension{}
-	// }))
-
 	container, err := di.New(providers...)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	var config pb.Config = pb.Config{}
+	if err := container.Resolve(&config); err != nil {
+		if !errors.Is(err, di.ErrTypeNotExists) {
+			log.Fatal(err)
+		}
+	}
+
 	app := &PocketBase{
 		Container:  container,
-		PocketBase: pb.New(),
+		PocketBase: pb.NewWithConfig(config),
 	}
 
 	app.Provide(func() *PocketBase {
@@ -40,6 +43,16 @@ func New(providers ...di.Option) *PocketBase {
 	return app
 }
 
+// NewWithConfig godoc
+func NewWithConfig(config pb.Config, providers ...di.Option) *PocketBase {
+	providers = append(providers, di.Provide(func() pb.Config {
+		return config
+	}))
+
+	return New(providers...)
+}
+
+// Start godoc
 func (app *PocketBase) Start() error {
 	if err := app.Invoke(app.configureExtensions); err != nil {
 		if !errors.Is(err, di.ErrTypeNotExists) {
@@ -83,3 +96,7 @@ func (app *PocketBase) configureRouter(ctx *core.ServeEvent) error {
 
 	return ctx.Next()
 }
+
+// providers = append(providers, NewExtension(func() *controllerExtension {
+// 	return &controllerExtension{}
+// }))
